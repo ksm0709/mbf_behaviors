@@ -13,5 +13,6 @@
 
   <!-- Add here all ROS packages that contain behaviors -->
   <run_depend>behavior_example_behavior</run_depend>
+  <run_depend>behavior_mbf_state_machine</run_depend>
 
 </package>

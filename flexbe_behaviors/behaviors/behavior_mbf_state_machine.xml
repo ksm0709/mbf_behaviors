@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="mbf state machine">
+
+	<executable package_path="behavior_mbf_state_machine.mbf_state_machine_sm" class="mbfstatemachineSM" />
+	<tagstring>demo</tagstring>
+	<author>taehokang</author>
+	<date>Thu Jul 26 2018</date>
+	<description>
+		move base flex state macine
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>
