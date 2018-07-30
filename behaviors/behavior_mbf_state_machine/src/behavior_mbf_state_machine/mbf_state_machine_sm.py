@@ -13,6 +13,7 @@ from mbf_flexbe_states.exe_path import ExePathActionState
 from mbf_flexbe_states.recovery import RecoveryActionState
 from mbf_flexbe_states.get_path import GetPathActionState
 from mbf_flexbe_states.recovery_manage import RecoveryManageState
+from flexbe_states.wait_state import WaitState
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -61,7 +62,7 @@ class mbfstatemachineSM(Behavior):
 			# x:253 y:27
 			OperatableStateMachine.add('WAIT_FOR_GOAL',
 										SubscriberState(topic="/move_base_simple/goal", blocking=True, clear=False),
-										transitions={'received': 'GET_PATH', 'unavailable': 'WAIT_FOR_GOAL'},
+										transitions={'received': 'CLEAR_BEFORE_PLANNING', 'unavailable': 'WAIT_FOR_GOAL'},
 										autonomy={'received': Autonomy.Off, 'unavailable': Autonomy.Off},
 										remapping={'message': 'target_pose'})
 
@@ -99,6 +100,19 @@ class mbfstatemachineSM(Behavior):
 										transitions={'case_a': 'CLEAR_COSTMAP', 'case_b': 'ROTATE_RECOVERY', 'succeeded': 'GET_PATH', 'aborted': 'WAIT_FOR_GOAL'},
 										autonomy={'case_a': Autonomy.Off, 'case_b': Autonomy.Off, 'succeeded': Autonomy.Off, 'aborted': Autonomy.Off},
 										remapping={'outcome': 'outcome'})
+
+			# x:43 y:173
+			OperatableStateMachine.add('CLEAR_BEFORE_PLANNING',
+										RecoveryActionState(behavior="clear_costmap"),
+										transitions={'done': 'WAIT_CLEAR'},
+										autonomy={'done': Autonomy.Off},
+										remapping={'outcome': 'outcome'})
+
+			# x:99 y:280
+			OperatableStateMachine.add('WAIT_CLEAR',
+										WaitState(wait_time=1.0),
+										transitions={'done': 'GET_PATH'},
+										autonomy={'done': Autonomy.Off})
 
 
 		return _state_machine

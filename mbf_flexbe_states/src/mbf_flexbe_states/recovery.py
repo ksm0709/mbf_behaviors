@@ -28,35 +28,23 @@ class RecoveryActionState(EventState):
 
         # Check if the client failed to send the goal.
         if self._error:
-            return 'failed'
+            userdata.outcome = {'origin': self._behavior,
+                    'outcome': -1}
+
+            return 'done'
 
         # Check if the action has been finished
         if self._client.has_result(self._topic):
             result = self._client.get_result(self._topic)
 
             # Set output keys
-            userdata.outcome = {'origin': behavior,
+            userdata.outcome = {'origin': self._behavior,
                     'outcome': result.outcome}
 
             # Send result log
             Logger.loginfo(result.message)
 
-            # Based on the result, decide which outcome to trigger.
-            if result.outcome == RecoveryResult.SUCCESS:
-                return 'succeeded'
-            elif result.outcome == RecoveryResult.FAILURE:
-                return 'failed'
-            elif result.outcome == RecoveryResult.CANCELED:
-                return 'aborted'
-            elif result.outcome == RecoveryResult.PAT_EXCEEDED:
-                return 'failed'
-            elif result.outcome == RecoveryResult.INVALID_NAME:
-                return 'aborted'
-            elif result.outcome == RecoveryResult.INTERNAL_ERROR:
-                return 'aborted'
-            else:
-                return 'aborted'
-
+            return 'done'
             # If the action has not yet finished, no outcome will be returned and the state stays active.
 
 
