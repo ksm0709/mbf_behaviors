@@ -14,6 +14,7 @@ from mbf_flexbe_states.recovery import RecoveryActionState
 from mbf_flexbe_states.get_path import GetPathActionState
 from mbf_flexbe_states.recovery_manage import RecoveryManageState
 from flexbe_states.wait_state import WaitState
+from mbf_flexbe_states.exe_rotate import ExeRotateState
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -35,6 +36,13 @@ class mbfstatemachineSM(Behavior):
 		self.name = 'mbf state machine'
 
 		# parameters of this behavior
+		self.add_parameter('goal_topic', '/move_base_simple/goal')
+		self.add_parameter('cmdvel_topic', '/cmd_vel')
+		self.add_parameter('planner', 'global_planner')
+		self.add_parameter('controller', 'dwa_controller')
+		self.add_parameter('rot_Kp', 1.0)
+		self.add_parameter('rot_thr', 0.05)
+		self.add_parameter('rot_max_vel', 0.3)
 
 		# references to used behaviors
 
@@ -61,14 +69,14 @@ class mbfstatemachineSM(Behavior):
 		with _state_machine:
 			# x:253 y:27
 			OperatableStateMachine.add('WAIT_FOR_GOAL',
-										SubscriberState(topic="/move_base_simple/goal", blocking=True, clear=False),
+										SubscriberState(topic=self.goal_topic, blocking=True, clear=False),
 										transitions={'received': 'CLEAR_BEFORE_PLANNING', 'unavailable': 'WAIT_FOR_GOAL'},
 										autonomy={'received': Autonomy.Off, 'unavailable': Autonomy.Off},
 										remapping={'message': 'target_pose'})
 
 			# x:467 y:164
 			OperatableStateMachine.add('EXE_PATH',
-										ExePathActionState(controller="dwa_controller"),
+										ExePathActionState(controller=self.controller, goal_topic=self.goal_topic),
 										transitions={'succeeded': 'WAIT_FOR_GOAL', 'failed': 'RECOVERY_MANAGE', 'aborted': 'WAIT_FOR_GOAL'},
 										autonomy={'succeeded': Autonomy.Off, 'failed': Autonomy.Off, 'aborted': Autonomy.Off},
 										remapping={'path': 'path', 'outcome': 'outcome', 'final_pose': 'final_pose', 'dist_to_goal': 'dist_to_goal', 'angle_to_goal': 'angle_to_goal'})
@@ -89,8 +97,8 @@ class mbfstatemachineSM(Behavior):
 
 			# x:251 y:317
 			OperatableStateMachine.add('GET_PATH',
-										GetPathActionState(planner="global_planner", tolerance=0.2),
-										transitions={'succeeded': 'EXE_PATH', 'failed': 'RECOVERY_MANAGE', 'aborted': 'WAIT_FOR_GOAL'},
+										GetPathActionState(planner=self.planner, tolerance=0.2),
+										transitions={'succeeded': 'EXE_ROTATE', 'failed': 'RECOVERY_MANAGE', 'aborted': 'WAIT_FOR_GOAL'},
 										autonomy={'succeeded': Autonomy.Off, 'failed': Autonomy.Off, 'aborted': Autonomy.Off},
 										remapping={'target_pose': 'target_pose', 'outcome': 'outcome', 'path': 'path'})
 
@@ -113,6 +121,13 @@ class mbfstatemachineSM(Behavior):
 										WaitState(wait_time=1.0),
 										transitions={'done': 'GET_PATH'},
 										autonomy={'done': Autonomy.Off})
+
+			# x:397 y:239
+			OperatableStateMachine.add('EXE_ROTATE',
+										ExeRotateState(cmd_topic=self.cmdvel_topic, Kp=self.rot_Kp, max_vel=self.rot_max_vel, thr_rad=self.rot_thr),
+										transitions={'done': 'EXE_PATH'},
+										autonomy={'done': Autonomy.Off},
+										remapping={'path': 'path', 'outcome': 'outcome'})
 
 
 		return _state_machine

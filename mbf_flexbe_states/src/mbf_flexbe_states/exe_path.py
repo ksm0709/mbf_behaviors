@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from flexbe_core import EventState, Logger
 from flexbe_core.proxy import ProxyActionClient
-from mbf_msgs.msg import (ExePathAction, ExePathFeedback, ExePathGoal, ExePathResult)
+from flexbe_core.proxy import ProxySubscriberCached
 
+from mbf_msgs.msg import (ExePathAction, ExePathFeedback, ExePathGoal, ExePathResult)
+from geometry_msgs.msg import PoseStamped 
 
 class ExePathActionState(EventState):
 
-    def __init__(self, controller):
+    def __init__(self, controller, goal_topic):
         super(ExePathActionState, self).__init__(output_keys = ['outcome','final_pose','dist_to_goal','angle_to_goal'],
                                                 input_keys = ['path'],
                                                 outcomes = ['succeeded','failed','aborted'])
@@ -16,6 +18,9 @@ class ExePathActionState(EventState):
         # Create the action client when building the behavior.
         self._topic = '/move_base_flex/exe_path'
         self._client = ProxyActionClient({self._topic: ExePathAction}) # pass required clients as dict (topic: type)
+
+        self._goal_topic = goal_topic
+        self._goal_sub =  ProxySubscriberCached({self._goal_topic : PoseStamped})
 
         # It may happen that the action client fails to send the action goal.
         self._error = False
@@ -27,6 +32,12 @@ class ExePathActionState(EventState):
         # Check if the client failed to send the goal.
         if self._error:
             return 'failed'
+
+        # stop robot and set 'aborted' state if new goal is detected
+        if self._goal_sub.has_msg(self._goal_topic):
+            Logger.loginfo("New goal recieved! stopping robot..")      
+            self._client.cancel(self._topic)
+            return 'aborted'
 
         # Check if the action has been finished
         if self._client.has_result(self._topic):

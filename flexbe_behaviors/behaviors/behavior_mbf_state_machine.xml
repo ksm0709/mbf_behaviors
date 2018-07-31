@@ -14,5 +14,32 @@
 	<!-- Contained Behaviors -->
 
 	<!-- Available Parameters -->
+	<params>
+
+		<param type="text" name="goal_topic" default="/move_base_simple/goal" label="goal_topic" hint="Sets the goal_topic" />
+
+		<param type="text" name="cmdvel_topic" default="/cmd_vel" label="cmdvel_topic" hint="Sets the cmdvel_topic" />
+
+		<param type="text" name="planner" default="global_planner" label="planner" hint="Sets the planner" />
+
+		<param type="text" name="controller" default="dwa_controller" label="controller" hint="Sets the controller" />
+
+		<param type="numeric" name="rot_Kp" default="1.0" label="rot_Kp" hint="Sets the rot_Kp">
+			<min value="0" />
+			<max value="1" />
+		</param>
+
+		<param type="numeric" name="rot_thr" default="0.05" label="rot_thr" hint="Sets the rot_thr">
+			<min value="0" />
+			<max value="1" />
+		</param>
+
+		<param type="numeric" name="rot_max_vel" default="0.3" label="rot_max_vel" hint="Sets the rot_max_vel">
+			<min value="0" />
+			<max value="1" />
+		</param>
+
+	</params>
+
 
 </behavior>
